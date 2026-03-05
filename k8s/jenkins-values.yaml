@@ -1,0 +1,31 @@
+controller:
+  image:
+    registry: docker.io
+    repository: akshat123mehra/jenkins-docker
+    tag: lts
+    pullPolicy: Always
+
+  installPlugins:
+    - kubernetes
+    - docker-workflow
+    - workflow-aggregator
+    - git
+    - configuration-as-code
+
+  containerEnv:
+    - name: DOCKER_HOST
+      value: unix:///var/run/docker.sock
+
+  volumes:
+    - name: docker-sock
+      hostPath:
+        path: /var/run/docker.sock
+
+  volumeMounts:
+    - name: docker-sock
+      mountPath: /var/run/docker.sock
+
+  serviceType: ClusterIP
+
+persistence:
+  enabled: true
