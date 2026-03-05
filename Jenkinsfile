@@ -9,8 +9,10 @@ spec:
   - name: kaniko
     image: gcr.io/kaniko-project/executor:latest
     command:
-      - cat
-    tty: true
+      - /busybox/sh
+    args:
+      - -c
+      - sleep 999999
     volumeMounts:
       - name: docker-config
         mountPath: /kaniko/.docker
@@ -36,9 +38,9 @@ spec:
         container('kaniko') {
           sh '''
           /kaniko/executor \
-            --context $(pwd)/backend \
-            --dockerfile $(pwd)/backend/Dockerfile \
-            --destination akshat123mehra/task-backend:latest
+          --context $(pwd)/backend \
+          --dockerfile $(pwd)/backend/Dockerfile \
+          --destination akshat123mehra/task-backend:latest
           '''
         }
       }
@@ -49,17 +51,11 @@ spec:
         container('kaniko') {
           sh '''
           /kaniko/executor \
-            --context $(pwd)/frontend \
-            --dockerfile $(pwd)/frontend/Dockerfile \
-            --destination akshat123mehra/task-frontend:latest
+          --context $(pwd)/frontend \
+          --dockerfile $(pwd)/frontend/Dockerfile \
+          --destination akshat123mehra/task-frontend:latest
           '''
         }
-      }
-    }
-
-    stage('Deploy to Kubernetes') {
-      steps {
-        sh 'kubectl apply -f k8s/'
       }
     }
 
