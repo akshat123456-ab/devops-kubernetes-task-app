@@ -1,51 +1,67 @@
 pipeline {
-    agent any
-
-    environment {
-        DOCKERHUB_USER = "akshat123mehra"
-        IMAGE_BACKEND = " akshat123mehra/task-backend"
-        IMAGE_FRONTEND = "akshat123mehra/task-frontend"
+  agent {
+    kubernetes {
+      yaml """
+apiVersion: v1
+kind: Pod
+spec:
+  containers:
+  - name: kaniko
+    image: gcr.io/kaniko-project/executor:latest
+    command:
+      - cat
+    tty: true
+    volumeMounts:
+      - name: docker-config
+        mountPath: /kaniko/.docker
+  volumes:
+    - name: docker-config
+      secret:
+        secretName: dockerhub-secret
+"""
     }
+  }
 
-    stages {
+  stages {
 
-        stage('Checkout Code') {
-    steps {
+    stage('Checkout Code') {
+      steps {
         git branch: 'main',
         url: 'https://github.com/akshat123456-ab/devops-kubernetes-task-app.git'
+      }
     }
-}
 
-        stage('Build Backend Image') {
-            steps {
-                sh 'docker build -t $IMAGE_BACKEND:latest ./backend'
-            }
+    stage('Build Backend Image') {
+      steps {
+        container('kaniko') {
+          sh '''
+          /kaniko/executor \
+            --context $(pwd)/backend \
+            --dockerfile $(pwd)/backend/Dockerfile \
+            --destination akshat123mehra/task-backend:latest
+          '''
         }
-
-        stage('Build Frontend Image') {
-            steps {
-                sh 'docker build -t $IMAGE_FRONTEND:latest ./frontend'
-            }
-        }
-
-        stage('Push Images') {
-            steps {
-                withCredentials([usernamePassword(
-                    credentialsId: 'dockerhub',
-                    usernameVariable: 'USERNAME',
-                    passwordVariable: 'PASSWORD'
-                )]) {
-                    sh 'docker login -u $USERNAME -p $PASSWORD'
-                    sh 'docker push $IMAGE_BACKEND:latest'
-                    sh 'docker push $IMAGE_FRONTEND:latest'
-                }
-            }
-        }
-
-        stage('Deploy to Kubernetes') {
-            steps {
-                sh 'kubectl apply -f k8s/'
-            }
-        }
+      }
     }
+
+    stage('Build Frontend Image') {
+      steps {
+        container('kaniko') {
+          sh '''
+          /kaniko/executor \
+            --context $(pwd)/frontend \
+            --dockerfile $(pwd)/frontend/Dockerfile \
+            --destination akshat123mehra/task-frontend:latest
+          '''
+        }
+      }
+    }
+
+    stage('Deploy to Kubernetes') {
+      steps {
+        sh 'kubectl apply -f k8s/'
+      }
+    }
+
+  }
 }
