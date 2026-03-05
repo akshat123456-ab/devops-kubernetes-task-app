@@ -65,10 +65,12 @@ export default function SignUp() {
       await register(name, email, password);
       showToast("Account created successfully! Please sign in.", "success", 1500);
       setTimeout(() => router.push("/login"), 1500);
+      console.log("User registered successfully");
     } catch (error) {
       const errorMessage = error.response?.data?.error || "Sign up failed. Please try again.";
       showToast(errorMessage, "error");
       setErrors({ form: errorMessage });
+      
     } finally {
       setLoading(false);
     }
