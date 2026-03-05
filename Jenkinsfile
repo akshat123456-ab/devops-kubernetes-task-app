@@ -10,10 +10,11 @@ pipeline {
     stages {
 
         stage('Checkout Code') {
-            steps {
-                git 'https://github.com/akshat123456-ab/devops-kubernetes-task-app.git'
-            }
-        }
+    steps {
+        git branch: 'main',
+        url: 'https://github.com/akshat123456-ab/devops-kubernetes-task-app.git'
+    }
+}
 
         stage('Build Backend Image') {
             steps {
